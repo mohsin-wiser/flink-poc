@@ -2,7 +2,7 @@ FROM ubuntu:23.04
 
 RUN apt update
 
-RUN apt install default-jdk default-jre -y
+RUN apt install openjdk-11-jdk openjdk-11-jre -y
 RUN apt install openssh-server openssh-client -y
 RUN apt install sudo -y
 
@@ -29,9 +29,29 @@ RUN mkdir -p /home/hadoop/hdfs/{namenode,datanode}
 RUN chown -R hadoop:hadoop /home/hadoop/hdfs
 COPY ./script/start-hadoop.sh /home/hadoop/start-hadoop.sh
 RUN chmod 777 /home/hadoop/start-hadoop.sh
+
 RUN echo 'hadoop ALL = NOPASSWD: /etc/init.d/ssh start' >> /etc/sudoers
 RUN wget https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-flink-runtime-1.14/0.14.1/iceberg-flink-runtime-1.14-0.14.1.jar -P /opt/flink-1.16.0/lib
 RUN wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-postgres-cdc/2.3.0/flink-sql-connector-postgres-cdc-2.3.0.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk/1.12.387/aws-java-sdk-1.12.387.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-core/1.12.387/aws-java-sdk-core-1.12.387.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-s3/1.12.387/aws-java-sdk-s3-1.12.387.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/joda-time/joda-time/2.1/joda-time-2.1.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-dynamodb/1.12.387/aws-java-sdk-dynamodb-1.12.387.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repository.cloudera.com/artifactory/cloudera-repos/org/apache/iceberg/iceberg/iceberg-aws/0.9.1.1.4.0.7220-12/iceberg-aws-0.9.1.1.4.0.7220-12.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.19.19/s3-2.19.19.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/software/amazon/awssdk/protocol-core/2.19.19/protocol-core-2.19.19.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/software/amazon/awssdk/apache-client/2.19.19/apache-client-2.19.19.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/software/amazon/awssdk/aws-core/2.19.19/aws-core-2.19.19.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-dynamodb/1.12.387/aws-java-sdk-dynamodb-1.12.387.jar -P /opt/flink-1.16.0/lib
+# RUN wget https://repo1.maven.org/maven2/software/amazon/awssdk/aws-sdk-java/2.19.20/aws-sdk-java-2.19.20.jar -P /opt/flink-1.16.0/lib
+RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-core/1.12.387/aws-java-sdk-core-1.12.387.jar -P /opt/flink-1.16.0/lib
+
+RUN mkdir /opt/flink-1.16.0/plugins/s3-fs-presto
+RUN mkdir /opt/flink-1.16.0/plugins/s3-fs-hadoop
+RUN wget https://repo1.maven.org/maven2/org/apache/flink/flink-s3-fs-presto/1.16.0/flink-s3-fs-presto-1.16.0.jar -P /opt/flink-1.16.0/plugins/s3-fs-presto
+RUN wget https://repo1.maven.org/maven2/org/apache/flink/flink-s3-fs-hadoop/1.16.0/flink-s3-fs-hadoop-1.16.0.jar -P /opt/flink-1.16.0/plugins/s3-fs-hadoop
 
 USER hadoop
 
@@ -48,6 +68,9 @@ RUN echo 'export HADOOP_CLASSPATH=`$HADOOP_HOME/bin/hadoop classpath`' >> /home/
 
 RUN echo 'export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")' >> /usr/local/hadoop/etc/hadoop/hadoop-env.sh
 RUN echo 'export HADOOP_CLASSPATH+=" $HADOOP_HOME/lib/*.jar"' >> /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+
+RUN echo 's3.access-key: 3JgaDfIIjVwnnUhy' >> /opt/flink-1.16.0/conf/flink-conf.yaml
+RUN echo 's3.secret-key: faEICXUIHPeAIo0zrLYhiDK44mIA6Xup' >> /opt/flink-1.16.0/conf/flink-conf.yaml
 
 COPY ./config/*.xml /usr/local/hadoop/etc/hadoop/
 
